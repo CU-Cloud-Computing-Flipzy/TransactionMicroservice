@@ -15,33 +15,31 @@ class TransactionStatus(str, Enum):
     REFUNDED = "REFUNDED"
 
 
-class Currency(str, Enum):
-    USD = "USD"
-    USDT = "USDT"
-
-
 class TransactionItem(BaseModel):
     product_id: UUID = Field(..., description="Product ID.")
     title_snapshot: str = Field(..., description="Product title at purchase time.")
-    unit_price: condecimal(gt=0, max_digits=20, decimal_places=8) = Field(..., description="Unit price at purchase time.")
+    unit_price: condecimal(gt=0, max_digits=20, decimal_places=8) = Field(
+        ..., description="Unit price at purchase time."
+    )
     quantity: conint(gt=0) = Field(..., description="Quantity purchased.")
 
 
 class Transaction(BaseModel):
     """
     Represents an order between a buyer and a seller.
-    Currency corresponds to product type:
-      - USD → real products
-      - USDT → virtual products
+    Payment is always in USD. No distinction between product types.
     """
     id: UUID = Field(default_factory=uuid4, description="Transaction ID.")
     buyer_id: UUID = Field(..., description="Buyer ID.")
     seller_id: UUID = Field(..., description="Seller ID.")
     status: TransactionStatus = Field(default=TransactionStatus.PENDING, description="Transaction status.")
     items: List[TransactionItem] = Field(default_factory=list, description="List of purchased items.")
+
     subtotal: condecimal(gt=0, max_digits=20, decimal_places=8) = Field(..., description="Subtotal amount.")
     total: condecimal(gt=0, max_digits=20, decimal_places=8) = Field(..., description="Total amount.")
-    currency: Currency = Field(..., description="Transaction currency: USD or USDT.")
+
+    currency: str = Field(default="USD", description="Payment currency (always USD).")
+
     created_at: datetime = Field(default_factory=datetime.utcnow, description="Creation timestamp (UTC).")
     updated_at: datetime = Field(default_factory=datetime.utcnow, description="Last update timestamp (UTC).")
 
@@ -62,7 +60,7 @@ class Transaction(BaseModel):
                 ],
                 "subtotal": "39.98000000",
                 "total": "39.98000000",
-                "currency": "USDT",
+                "currency": "USD",
                 "created_at": "2025-01-15T10:20:30Z",
                 "updated_at": "2025-01-15T10:20:30Z"
             }

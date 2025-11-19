@@ -8,7 +8,7 @@ from pydantic import BaseModel, Field, condecimal
 class Wallet(BaseModel):
     """
     Represents a user's unified wallet.
-    Each user has only one wallet with balances in USD and USDT.
+    Each user has only one wallet and payment is only in USD.
     """
     id: UUID = Field(default_factory=uuid4, description="Wallet ID.")
     user_id: UUID = Field(..., description="User ID who owns this wallet.")
@@ -16,11 +16,6 @@ class Wallet(BaseModel):
     usd_balance: condecimal(ge=0, max_digits=20, decimal_places=4) = Field(
         default=Decimal("0"),
         description="Balance in USD."
-    )
-
-    usdt_balance: condecimal(ge=0, max_digits=20, decimal_places=8) = Field(
-        default=Decimal("0"),
-        description="Balance in USDT."
     )
 
     created_at: datetime = Field(
@@ -38,7 +33,6 @@ class Wallet(BaseModel):
                 "id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
                 "user_id": "11111111-2222-3333-4444-555555555555",
                 "usd_balance": "500.0000",
-                "usdt_balance": "100.00000000",
                 "created_at": "2025-01-15T10:20:30Z",
                 "updated_at": "2025-01-15T10:20:30Z"
             }
