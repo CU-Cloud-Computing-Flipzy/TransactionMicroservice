@@ -60,13 +60,11 @@ class DepositRequest(BaseModel):
     amount: condecimal(gt=0, max_digits=20, decimal_places=2)
 
 
-# ⚠ IMPORTANT: snapshot comes from composite, not listing
 class TransactionCreate(BaseModel):
     buyer_id: UUID
     seller_id: UUID
     item_id: UUID
     order_type: Literal["REAL", "VIRTUAL"]
-
     title_snapshot: str
     price_snapshot: condecimal(gt=0, max_digits=20, decimal_places=2)
 
@@ -94,14 +92,12 @@ def create_wallet(req: WalletCreate, response: Response):
     response.headers["Location"] = f"/wallets/{w.id}"
     return {**w.model_dump(), "_links": wallet_links(w)}
 
-
 @app.get("/wallets")
 def list_wallets(user_id: Optional[UUID] = None):
     ws = list(wallets.values())
     if user_id:
         ws = [w for w in ws if w.user_id == user_id]
     return [{**w.model_dump(), "_links": wallet_links(w)} for w in ws]
-
 
 @app.get("/wallets/{wallet_id}")
 def get_wallet(wallet_id: UUID, request: Request, response: Response):
@@ -117,7 +113,6 @@ def get_wallet(wallet_id: UUID, request: Request, response: Response):
     response.headers["ETag"] = etag
     return {**w.model_dump(), "_links": wallet_links(w)}
 
-
 @app.post("/wallets/{wallet_id}/deposit")
 def deposit(wallet_id: UUID, req: DepositRequest):
     w = wallets.get(wallet_id)
@@ -127,7 +122,6 @@ def deposit(wallet_id: UUID, req: DepositRequest):
     w.balance += req.amount
     w.updated_at = datetime.utcnow()
     return {**w.model_dump(), "_links": wallet_links(w)}
-
 
 @app.delete("/wallets/{wallet_id}", status_code=204)
 def delete_wallet(wallet_id: UUID):
@@ -184,7 +178,7 @@ def create_transaction(req: TransactionCreate, response: Response):
         response.headers["Location"] = f"/transactions/{t.id}"
         return {**t.model_dump(), "_links": tx_links(t)}
 
-    # Real = asynchronous payment
+    # Real = async
     t = Transaction(
         buyer_id=req.buyer_id,
         seller_id=req.seller_id,
@@ -198,7 +192,6 @@ def create_transaction(req: TransactionCreate, response: Response):
     transactions[t.id] = t
     response.headers["Location"] = f"/transactions/{t.id}"
     return {**t.model_dump(), "_links": tx_links(t)}
-
 
 @app.get("/transactions")
 def list_transactions(
@@ -216,14 +209,12 @@ def list_transactions(
 
     return [{"transaction": t.model_dump(), "_links": tx_links(t)} for t in results]
 
-
 @app.get("/transactions/{tx_id}")
 def get_transaction(tx_id: UUID):
     t = transactions.get(tx_id)
     if not t:
         raise HTTPException(404, "Transaction not found")
     return {**t.model_dump(), "_links": tx_links(t)}
-
 
 @app.post("/transactions/{tx_id}/checkout", status_code=202)
 def checkout_transaction(tx_id: UUID):
@@ -253,7 +244,13 @@ def checkout_transaction(tx_id: UUID):
     threading.Thread(target=background_job, daemon=True).start()
     return {**t.model_dump(), "_links": tx_links(t), "processing": True}
 
-
 @app.get("/")
 def root():
     return {"message": "Transaction Service running"}
+
+# =====================================================
+# CLOUD RUN
+# =====================================================
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run("main:app", host="0.0.0.0", port=8080)
