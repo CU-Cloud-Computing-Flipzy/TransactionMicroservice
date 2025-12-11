@@ -21,8 +21,6 @@ class Transaction(BaseModel):
     - VIRTUAL items are processed immediately (COMPLETED or FAILED at creation).
     - REAL items require asynchronous processing, starting as PENDING and 
       later transitioning to COMPLETED or FAILED.
-
-    Supports both REAL and VIRTUAL items.
     """
 
     id: UUID = Field(default_factory=uuid4, description="Transaction ID")
@@ -36,6 +34,7 @@ class Transaction(BaseModel):
     )
 
     title_snapshot: str = Field(..., description="Item title at purchase time")
+
     price_snapshot: condecimal(gt=0, max_digits=20, decimal_places=2) = Field(
         ..., description="Price at purchase time"
     )

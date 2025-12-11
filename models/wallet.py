@@ -12,11 +12,7 @@ class Wallet(BaseModel):
     """
     id: UUID = Field(default_factory=uuid4, description="Wallet ID.")
     user_id: UUID = Field(..., description="User ID who owns this wallet.")
-
-    balance: condecimal(ge=0, max_digits=20, decimal_places=2) = Field(
-        default=Decimal("0"),
-        description="Balance in USD."
-    )
+    balance: Decimal = Field(..., ge=0, max_digits=20, decimal_places=2)
 
     created_at: datetime = Field(
         default_factory=datetime.utcnow,
