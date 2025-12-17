@@ -16,7 +16,7 @@ def publish_transaction_completed(tx):
         "seller_id": tx.seller_id,
         "item_id": tx.item_id,
         "order_type": tx.order_type,
-        "price": str(tx.price_snapshot),
+        "price_snapshot": str(tx.price_snapshot),
         "status": tx.status.value,
         "completed_at": tx.created_at.isoformat(),
     }
