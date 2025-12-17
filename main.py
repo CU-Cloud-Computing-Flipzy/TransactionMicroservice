@@ -12,6 +12,7 @@ from typing import Optional, Literal
 from fastapi import FastAPI, HTTPException, Request, Response, Depends
 from pydantic import BaseModel, condecimal
 from sqlalchemy.orm import Session
+from pubsub import publish_transaction_completed
 
 from db import (
     WalletSQL,
@@ -206,6 +207,9 @@ def create_transaction(req: TransactionCreate, response: Response, db: Session =
         db.commit()
         db.refresh(t)
 
+        if t.status == TransactionStatus.COMPLETED:
+            publish_transaction_completed(t)
+
         response.headers["Location"] = f"/transactions/{t.id}"
         return {**tx_to_dict(t), "_links": tx_links(t)}
 
@@ -332,6 +336,9 @@ def checkout_transaction(tx_id: UUID, db: Session = Depends(get_db)):
             sw.updated_at = now
 
         session.commit()
+
+        if tx_obj.status == TransactionStatus.COMPLETED:
+            publish_transaction_completed(tx_obj)
 
     threading.Thread(target=job, daemon=True).start()
     return {**tx_to_dict(t), "_links": tx_links(t), "processing": True}
